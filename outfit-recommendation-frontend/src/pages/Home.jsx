@@ -6,6 +6,7 @@ import OutfitRow from "../components/OutfitRow";
 
 export default function Home() {
   const [baseId, setBaseId] = useState("");
+  const [budget, setBudget] = useState("mid"); // ✅ NEW
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +24,8 @@ export default function Home() {
     setResult(null);
 
     try {
-      const res = await getOutfits(baseId);
+      // ✅ pass budget to backend
+      const res = await getOutfits(baseId, budget);
       setResult(res);
     } catch (err) {
       setError("Failed to generate outfit. Please try again.");
@@ -36,7 +38,9 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100 px-6 py-10">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <h1 className="text-3xl font-bold mb-2">AI-Powered Outfit Recommendation System</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          AI-Powered Outfit Recommendation System
+        </h1>
         <p className="text-gray-600 mb-6">
           Select a product and compare complete outfit recommendations using real catalog data.
         </p>
@@ -44,7 +48,7 @@ export default function Home() {
         {/* Controls */}
         <div className="bg-white p-6 rounded-2xl shadow mb-8">
           <div className="flex flex-col gap-5">
-            {/* Dropdown */}
+            {/* Product Dropdown */}
             <select
               value={baseId}
               onChange={(e) => setBaseId(e.target.value)}
@@ -57,6 +61,22 @@ export default function Home() {
                 </option>
               ))}
             </select>
+
+            {/* Budget Selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Budget Preference
+              </label>
+              <select
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                className="border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-black"
+              >
+                <option value="low">Low (Budget-friendly)</option>
+                <option value="mid">Mid (Balanced)</option>
+                <option value="high">High (Premium)</option>
+              </select>
+            </div>
 
             {/* Selected Product Preview */}
             {selectedProduct && (
@@ -98,6 +118,11 @@ export default function Home() {
         {/* Results */}
         {result && (
           <>
+            {/* Budget Context */}
+            <p className="text-sm text-gray-500 mb-4">
+              Showing results for <span className="font-medium">{budget}</span> budget
+            </p>
+
             {/* No outfits */}
             {result.outfits.length === 0 && (
               <div className="bg-white p-6 rounded-xl shadow text-gray-700">
@@ -111,7 +136,6 @@ export default function Home() {
             {/* Outfit Rows */}
             {result.outfits.length > 0 && (
               <div className="bg-white rounded-2xl shadow px-8">
-                
                 {/* Header Row */}
                 <div className="grid grid-cols-7 gap-6 py-4 border-b text-gray-500 font-medium text-base">
                   <div>Score</div>

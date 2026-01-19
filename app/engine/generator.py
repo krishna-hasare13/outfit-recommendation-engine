@@ -5,29 +5,33 @@ from itertools import product
 from app.engine.scorer import score_outfit
 from app.engine.diversity import diversify
 
-# ---------- Load data once at startup ----------
+# ---------- Load data once ----------
 with open("app/data/products.json") as f:
     PRODUCTS = json.load(f)
 
 with open("app/data/compatibility_graph.json") as f:
     GRAPH = json.load(f)
 
+# ---------- Budget totals (SOFT caps) ----------
+BUDGET_TOTAL_LIMITS = {
+    "low": 9000,
+    "mid": 18000,
+    "high": 10**9
+}
 
-# ---------- Semantic Guards ----------
+# ---------- Semantic guards ----------
+INVALID_FOOTWEAR_KEYWORDS = {
+    "lace", "laces", "sock", "socks",
+    "insole", "cleaner", "spray",
+    "protector", "cream"
+}
+
 def is_valid_footwear(product):
-    """
-    Filters out non-shoe items incorrectly tagged as footwear
-    (laces, socks, cleaners, etc.)
-    """
     title = product.get("title", "").lower()
-    invalid_keywords = [
-        "lace", "laces", "sock", "socks",
-        "insole", "cleaner", "spray",
-        "protector", "cream"
-    ]
-    return not any(word in title for word in invalid_keywords)
+    return not any(word in title for word in INVALID_FOOTWEAR_KEYWORDS)
 
 
+# ---------- Main generator ----------
 def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
     start_time = time.perf_counter()
 
@@ -35,7 +39,6 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
     if not base:
         return {"error": "Invalid base product"}
 
-    # ❌ Accessories cannot anchor outfits
     if base["category"] == "accessory":
         return {
             "base_product": base_product_id,
@@ -49,19 +52,16 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
     tops = [p for p in others if p["category"] == "top"]
     bottoms = [p for p in others if p["category"] == "bottom"]
     accessories = [p for p in others if p["category"] == "accessory"]
-
     footwear = [
         p for p in others
         if p["category"] == "footwear" and is_valid_footwear(p)
     ]
 
-    # ---------- 🔒 LOCK BASE PRODUCT INTO ITS CATEGORY ----------
+    # ---------- Lock base ----------
     if base["category"] == "top":
         tops = [base]
-
     elif base["category"] == "bottom":
         bottoms = [base]
-
     elif base["category"] == "footwear":
         if not is_valid_footwear(base):
             return {
@@ -71,52 +71,40 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
             }
         footwear = [base]
 
-    # ---------- HARD LIMITS (PERFORMANCE SAFE) ----------
-    MAX_PER_CATEGORY = 6
-    MAX_OUTFITS = 25
-    MAX_TIME_SEC = 0.6
+    # ---------- Performance limits ----------
+    MAX_PER_CATEGORY = 8
+    MAX_OUTFITS = 30
+    MAX_TIME_SEC = 0.7
 
-    # Shuffle ONLY non-base categories
-    if base["category"] != "top":
-        random.shuffle(tops)
-        tops = tops[:MAX_PER_CATEGORY]
-
-    if base["category"] != "bottom":
-        random.shuffle(bottoms)
-        bottoms = bottoms[:MAX_PER_CATEGORY]
-
-    if base["category"] != "footwear":
-        random.shuffle(footwear)
-        footwear = footwear[:MAX_PER_CATEGORY]
-
+    random.shuffle(tops)
+    random.shuffle(bottoms)
+    random.shuffle(footwear)
     random.shuffle(accessories)
+
+    tops = tops[:MAX_PER_CATEGORY]
+    bottoms = bottoms[:MAX_PER_CATEGORY]
+    footwear = footwear[:MAX_PER_CATEGORY]
     accessories = accessories[:MAX_PER_CATEGORY]
 
     outfits = []
     base_links = set(GRAPH.get(base_product_id, []))
+    max_total = BUDGET_TOTAL_LIMITS.get(budget_tier, 18000)
 
     # ---------- Outfit generation ----------
-    for top, bottom, shoe, accessory in product(
-        tops, bottoms, footwear, accessories
-    ):
-        # ⏱️ Hard safety cutoff
+    for top, bottom, shoe, accessory in product(tops, bottoms, footwear, accessories):
+
         if time.perf_counter() - start_time > MAX_TIME_SEC:
             break
 
-        # ---- Graph compatibility rules ----
+        # Compatibility checks
         if base["category"] != "top" and top["id"] not in base_links:
             continue
-
         if base["category"] != "bottom" and bottom["id"] not in base_links:
             continue
-
         if base["category"] != "footwear" and shoe["id"] not in base_links:
             continue
-
         if accessory["id"] not in base_links:
             continue
-
-        # Bottom must be compatible with top
         if bottom["id"] not in GRAPH.get(top["id"], []):
             continue
 
@@ -126,6 +114,12 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
             "footwear": shoe,
             "accessory": accessory
         }
+
+        total_price = sum(p["price"] for p in products.values())
+
+        # ❗ SOFT budget gate (only extreme rejection)
+        if total_price > max_total:
+            continue
 
         score = score_outfit(base, products, budget_tier)
 
@@ -142,12 +136,9 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
                     "Casual streetwear outfit built around the selected product, "
                     "balanced for daily wear and budget awareness."
                 ),
-                "style": list(set(base["style"]) & set(top["style"])),
-                "occasion": occasion,
-                "season": list(set(base["season"]) & set(top["season"])),
                 "budget": {
                     "tier": budget_tier,
-                    "total_price": sum(p["price"] for p in products.values())
+                    "total_price": total_price
                 }
             }
         })
@@ -155,7 +146,7 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
         if len(outfits) >= MAX_OUTFITS:
             break
 
-    # ---------- Enforce real diversity ----------
+    # ---------- Diversity ----------
     outfits = diversify(
         sorted(outfits, key=lambda x: x["match_score"], reverse=True),
         base_category=base["category"],
@@ -164,5 +155,6 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
 
     return {
         "base_product": base_product_id,
+        "budget_tier": budget_tier,
         "outfits": outfits
     }

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.recommend import router as recommend_router
-from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI(
     title="AI Outfit Recommendation Engine",

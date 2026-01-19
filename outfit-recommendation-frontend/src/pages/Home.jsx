@@ -6,7 +6,7 @@ import OutfitRow from "../components/OutfitRow";
 
 export default function Home() {
   const [baseId, setBaseId] = useState("");
-  const [budget, setBudget] = useState("mid"); // ✅ NEW
+  const [budget, setBudget] = useState("mid");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,10 +24,9 @@ export default function Home() {
     setResult(null);
 
     try {
-      // ✅ pass budget to backend
       const res = await getOutfits(baseId, budget);
       setResult(res);
-    } catch (err) {
+    } catch {
       setError("Failed to generate outfit. Please try again.");
     } finally {
       setLoading(false);
@@ -35,18 +34,19 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-10">
+    <div className="min-h-screen bg-gray-100 px-4 sm:px-6 py-10">
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
-        <h1 className="text-3xl font-bold mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
           AI-Powered Outfit Recommendation System
         </h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 text-sm sm:text-base">
           Select a product and compare complete outfit recommendations using real catalog data.
         </p>
 
         {/* Controls */}
-        <div className="bg-white p-6 rounded-2xl shadow mb-8">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl shadow mb-8">
           <div className="flex flex-col gap-5">
             {/* Product Dropdown */}
             <select
@@ -80,14 +80,14 @@ export default function Home() {
 
             {/* Selected Product Preview */}
             {selectedProduct && (
-              <div className="flex items-center gap-5 p-4 bg-gray-50 rounded-xl">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                 <img
                   src={selectedProduct.image_url}
                   alt={selectedProduct.title}
-                  className="w-24 h-24 object-contain rounded-xl bg-white border"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-xl bg-white border"
                 />
                 <div>
-                  <p className="text-lg font-medium">
+                  <p className="text-base sm:text-lg font-medium">
                     {selectedProduct.title}
                   </p>
                   <p className="text-sm text-gray-500">
@@ -101,16 +101,13 @@ export default function Home() {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="bg-black text-white px-8 py-3 rounded-lg disabled:opacity-50 w-fit"
+              className="bg-black text-white px-8 py-3 rounded-lg disabled:opacity-50 w-full sm:w-fit"
             >
               {loading ? "Generating..." : "Generate Outfit"}
             </button>
 
-            {/* Error */}
             {error && (
-              <p className="text-sm text-red-600">
-                {error}
-              </p>
+              <p className="text-sm text-red-600">{error}</p>
             )}
           </div>
         </div>
@@ -118,12 +115,10 @@ export default function Home() {
         {/* Results */}
         {result && (
           <>
-            {/* Budget Context */}
             <p className="text-sm text-gray-500 mb-4">
               Showing results for <span className="font-medium">{budget}</span> budget
             </p>
 
-            {/* No outfits */}
             {result.outfits.length === 0 && (
               <div className="bg-white p-6 rounded-xl shadow text-gray-700">
                 <p className="font-medium mb-1">No outfits found.</p>
@@ -133,28 +128,31 @@ export default function Home() {
               </div>
             )}
 
-            {/* Outfit Rows */}
             {result.outfits.length > 0 && (
-              <div className="bg-white rounded-2xl shadow px-8">
-                {/* Header Row */}
-                <div className="grid grid-cols-7 gap-6 py-4 border-b text-gray-500 font-medium text-base">
-                  <div>Score</div>
-                  <div className="text-center">Top</div>
-                  <div className="text-center">Bottom</div>
-                  <div className="text-center">Footwear</div>
-                  <div className="text-center">Accessory</div>
-                  <div>Price</div>
-                  <div></div>
-                </div>
+              /* 👇 KEY MOBILE FIX */
+              <div className="bg-white rounded-2xl shadow overflow-x-auto">
+                <div className="min-w-[900px] px-6 sm:px-8">
+                  
+                  {/* Header Row */}
+                  <div className="grid grid-cols-7 gap-6 py-4 border-b text-gray-500 font-medium text-sm sm:text-base">
+                    <div>Score</div>
+                    <div className="text-center">Top</div>
+                    <div className="text-center">Bottom</div>
+                    <div className="text-center">Footwear</div>
+                    <div className="text-center">Accessory</div>
+                    <div>Price</div>
+                    <div></div>
+                  </div>
 
-                {/* Outfit Rows */}
-                {result.outfits.map((outfit, index) => (
-                  <OutfitRow
-                    key={index}
-                    outfit={outfit}
-                    products={products}
-                  />
-                ))}
+                  {/* Outfit Rows */}
+                  {result.outfits.map((outfit, index) => (
+                    <OutfitRow
+                      key={index}
+                      outfit={outfit}
+                      products={products}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </>

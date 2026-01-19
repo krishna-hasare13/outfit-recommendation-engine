@@ -2,6 +2,28 @@
 
 ## Project Overview
 A FastAPI-backed outfit recommender with a Vite/React frontend. It turns a chosen base product into a cohesive four-item outfit (top, bottom, footwear, accessory) using a precomputed compatibility graph, lightweight heuristics, and caching to return results in under a second.
+---
+
+## Live Demo (Deployed)
+
+- **Backend (FastAPI – Render)**  
+  https://outfit-recommendation-engine.onrender.com/
+
+- **Frontend (React + Vite – Vercel)**  
+  https://outfit-recommendation-engine-e4qn.vercel.app/
+
+### How to Check the Project
+1. **Open the backend link first**  
+   https://outfit-recommendation-engine.onrender.com/  
+   This wakes up the Render server (cold start may take a few seconds).
+
+2. **Then open the frontend link**  
+   https://outfit-recommendation-engine-e4qn.vercel.app/  
+   The frontend will call the backend API and render outfit recommendations.
+
+> **Note:** The first backend request may be slightly slower due to server spin-up. Subsequent requests are fast and often served from cache.
+
+---
 
 ## System Architecture
 

@@ -13,7 +13,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "https://outfit-recommendation-frontend.vercel.app"  # 🔁 CHANGE to your real Vercel URL
+        "https://outfit-recommendation-engine-e4qn.vercel.app/"  # 🔁 CHANGE to your real Vercel URL
     ],
     allow_credentials=True,
     allow_methods=["*"],

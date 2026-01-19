@@ -2,15 +2,18 @@ import json
 import time
 import random
 from itertools import product
-from app.engine.scorer import score_outfit
-from app.engine.diversity import diversify
+
+from engine.scorer import score_outfit
+from engine.diversity import diversify
+
 
 # ---------- Load data once ----------
-with open("app/data/products.json") as f:
+with open("data/products.json") as f:
     PRODUCTS = json.load(f)
 
-with open("app/data/compatibility_graph.json") as f:
+with open("data/compatibility_graph.json") as f:
     GRAPH = json.load(f)
+
 
 # ---------- Budget totals (SOFT caps) ----------
 BUDGET_TOTAL_LIMITS = {
@@ -19,12 +22,14 @@ BUDGET_TOTAL_LIMITS = {
     "high": 10**9
 }
 
+
 # ---------- Semantic guards ----------
 INVALID_FOOTWEAR_KEYWORDS = {
     "lace", "laces", "sock", "socks",
     "insole", "cleaner", "spray",
     "protector", "cream"
 }
+
 
 def is_valid_footwear(product):
     title = product.get("title", "").lower()
@@ -91,8 +96,9 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
     max_total = BUDGET_TOTAL_LIMITS.get(budget_tier, 18000)
 
     # ---------- Outfit generation ----------
-    for top, bottom, shoe, accessory in product(tops, bottoms, footwear, accessories):
-
+    for top, bottom, shoe, accessory in product(
+        tops, bottoms, footwear, accessories
+    ):
         if time.perf_counter() - start_time > MAX_TIME_SEC:
             break
 
@@ -117,7 +123,7 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
 
         total_price = sum(p["price"] for p in products.values())
 
-        # ❗ SOFT budget gate (only extreme rejection)
+        # ❗ Soft budget gate (only extreme rejection)
         if total_price > max_total:
             continue
 
@@ -146,7 +152,7 @@ def generate_outfits(base_product_id: str, occasion: str, budget_tier: str):
         if len(outfits) >= MAX_OUTFITS:
             break
 
-    # ---------- Diversity ----------
+    # ---------- Enforce diversity ----------
     outfits = diversify(
         sorted(outfits, key=lambda x: x["match_score"], reverse=True),
         base_category=base["category"],

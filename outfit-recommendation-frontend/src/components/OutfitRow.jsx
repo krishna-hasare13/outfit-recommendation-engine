@@ -1,4 +1,4 @@
-import ProductImage from "./productImage";
+import ProductImage from "./ProductImage";
 
 export default function OutfitRow({ outfit, products }) {
   const { items, match_score, reasoning } = outfit;

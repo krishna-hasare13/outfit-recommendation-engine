@@ -1,13 +1,11 @@
 import axios from "axios";
 
-export async function getOutfits(baseProductId, budgetTier) {
-  const res = await axios.post(
-    "http://127.0.0.1:8000/recommendations/outfit",
-    {
-      base_product_id: baseProductId,
-      occasion: "casual",
-      budget_tier: budgetTier
-    }
-  );
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const getOutfits = async (baseId, budget) => {
+  const res = await axios.post(`${API_URL}/recommendations/outfit`, {
+    base_product_id: baseId,
+    budget_tier: budget
+  });
   return res.data;
-}
+};

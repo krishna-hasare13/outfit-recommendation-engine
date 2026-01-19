@@ -1,4 +1,5 @@
-import ProductImage from "./productImage";
+import ProductImage from "./ProductImage";
+
 
 export default function OutfitCard({ outfit, products }) {
   const { items, match_score, reasoning } = outfit;

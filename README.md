@@ -3,6 +3,11 @@
 ## Project Overview
 A FastAPI-backed outfit recommender with a Vite/React frontend. It turns a chosen base product into a cohesive four-item outfit (top, bottom, footwear, accessory) using a precomputed compatibility graph, lightweight heuristics, and caching to return results in under a second.
 
+## System Architecture
+
+![Outfit Recommendation Engine Architecture](docs/architecture.png)
+
+
 ## Architecture Explanation
 - **Backend**: FastAPI service ([app/main.py](app/main.py)) exposing `/recommendations/outfit`. Core logic lives in [app/engine/generator.py](app/engine/generator.py), [app/engine/scorer.py](app/engine/scorer.py), and supporting helpers.
 - **Data**: In-memory JSON datasets loaded at startup ([app/data/products.json](app/data/products.json), [app/data/compatibility_graph.json](app/data/compatibility_graph.json)). Scripts in [scripts/](scripts) build these from CSVs.
